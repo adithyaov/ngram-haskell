@@ -2,6 +2,7 @@ module Ngram where
 
 import qualified Data.Map.Strict as Map
 import Data.Map.Strict (Map)
+import Control.Monad.Trans.Maybe
 import Distribution
 
 chunksOf :: Int -> [a] -> [[a]]
@@ -27,7 +28,20 @@ characters = "abcdefghijklmnopqrstuvwxyz"
 extendWith :: (Ord a) => [a] -> [a] -> [a]
 extendWith s = concatMap ((s ++) . (: []))
 
-predictNext :: (Eq a, Ord a) => Int -> Map [a] Int -> [a] -> IO (Maybe [a])
+predictNext :: (Eq a, Ord a) => Int -> Map [a] Int -> [a] -> MaybeT IO [a]
 predictNext n f s = do
-  let tS = drop (length s - n + 1) s
-  sample . filterD ((== tS) . init) . mkDistribution $ f
+  let (tS', tS) = splitAt (length s - n + 1) s
+  fmap (tS'++) . sample . filterD ((== tS) . init) . mkDistribution $ f
+
+predictN :: (Show a, Ord a) => Int -> Int -> Map [a] Int -> [a] -> IO ()
+predictN 0 _ _ _ = putStrLn "END: 0"
+predictN k n f s0 = do
+  mS1 <- runMaybeT $ predictNext n f s0
+  case mS1 of
+    Nothing -> putStrLn $ "END: " ++ show k
+    (Just s1) -> print s1 >> predictN (k - 1) n f s1
+  
+
+
+
+

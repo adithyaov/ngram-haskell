@@ -2,6 +2,7 @@ module Distribution where
 
 import Data.Map.Strict (Map, toList)
 import System.Random (randomRIO)
+import Control.Monad.Trans.Maybe
 
 type Distribution a = [(a, Int)]
 
@@ -17,8 +18,8 @@ choose i (x:xs)
 size :: Distribution a -> Int
 size = foldr ((+) . snd) 0
 
-sample :: Distribution a -> IO (Maybe a)
-sample d = flip choose d <$> randomRIO (0, size d - 1)
+sample :: Distribution a -> MaybeT IO a
+sample d = MaybeT $ flip choose d <$> randomRIO (1, size d)
 
 filterD :: (a -> Bool) -> Distribution a -> Distribution a
 filterD f = filter (f . fst)
