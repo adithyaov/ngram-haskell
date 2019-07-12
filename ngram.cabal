@@ -19,7 +19,7 @@ library
   exposed-modules:     Ngram
                      , Distribution
                      , NIO
-                     , Main
+  default-extensions:  DeriveGeneric 
   -- other-modules:
   -- other-extensions:
   build-depends:       base ^>=4.10.1.0
@@ -36,5 +36,6 @@ executable ngram
   -- other-modules:
   -- other-extensions:
   build-depends:       base ^>=4.10.1.0
-  hs-source-dirs:      src
+                     , ngram
+  hs-source-dirs:      exe
   default-language:    Haskell2010

@@ -1,11 +1,18 @@
 module Ngram where
 
+import Control.Monad.Trans.Maybe
 import qualified Data.Map.Strict as Map
 import Data.Map.Strict (Map)
-import Control.Monad.Trans.Maybe
+import qualified Data.Serialize as S
 import Distribution
 
-type Model a = Map a Int
+type Gram = Either Int Int
+
+nSize :: Gram -> Int
+nSize (Left i) = i
+nSize (Right i) = i
+
+type Model a = (Gram, Map a Int)
 
 chunksOf :: Int -> [a] -> [[a]]
 chunksOf i s = filter ((== i) . length) $ taker i s
@@ -13,7 +20,7 @@ chunksOf i s = filter ((== i) . length) $ taker i s
     taker _ [] = []
     taker i t@(x:xs) = take i t : taker i xs
 
-freq :: (Ord a) => [a] -> Model a
+freq :: (Ord a) => [a] -> Map a Int
 freq = foldr addFreq Map.empty
   where
     addFreq w m =
@@ -21,8 +28,14 @@ freq = foldr addFreq Map.empty
         Nothing -> Map.insert w 1 m
         Just x -> Map.insert w (x + 1) m
 
-make :: (Ord a) => Int -> [a] -> Model [a]
-make i = freq . chunksOf i
+make :: (Ord a) => Gram -> [a] -> Model [a]
+make g = (,) g . freq . chunksOf (nSize g)
+
+makeC :: Int -> String -> Model String
+makeC i = make (Right i)
+
+makeW :: Int -> String -> Model [String]
+makeW i s = make (Left i) $ wordsP punctuations "" [] s
 
 characters :: String
 characters = "abcdefghijklmnopqrstuvwxyz"
@@ -30,38 +43,34 @@ characters = "abcdefghijklmnopqrstuvwxyz"
 extendWith :: (Ord a) => [a] -> [a] -> [a]
 extendWith s = concatMap ((s ++) . (: []))
 
-predictNext :: (Eq a, Ord a) => Int -> Model [a] -> [a] -> MaybeT IO [a]
-predictNext n f s = do
-  let (tS', tS) = splitAt (length s - n + 1) s
-  fmap (tS'++) . sample . filterD ((== tS) . init) . mkDistribution $ f
+predictNext :: (Eq a, Ord a) => Model [a] -> [a] -> MaybeT IO [a]
+predictNext (n, f) s = do
+  let (tS', tS) = splitAt (length s - nSize n + 1) s
+  fmap (tS' ++) . sample . filterD ((== tS) . init) . mkDistribution $ f
 
-predictN :: (Show a, Ord a) => Int -> Int -> Model [a] -> [a] -> IO [a]
-predictN 0 _ _ s = return s
-predictN k n f s0 = do
-  mS1 <- runMaybeT $ predictNext n f s0
+predictN :: (Show a, Ord a) => Int -> Model [a] -> [a] -> IO [a]
+predictN 0 _ s = return s
+predictN k m s0 = do
+  mS1 <- runMaybeT $ predictNext m s0
   case mS1 of
     Nothing -> return s0
-    (Just s1) -> predictN (k - 1) n f s1
+    (Just s1) -> predictN (k - 1) m s1
 
-predictND :: (Show a, Ord a) => Int -> Int -> Model [a] -> [a] -> IO ()
-predictND 0 _ _ _ = putStrLn "END: 0"
-predictND k n f s0 = do
-  mS1 <- runMaybeT $ predictNext n f s0
+predictND :: (Show a, Ord a) => Int -> Model [a] -> [a] -> IO ()
+predictND 0 _ _ = putStrLn "END: 0"
+predictND k m s0 = do
+  mS1 <- runMaybeT $ predictNext m s0
   case mS1 of
     Nothing -> putStrLn $ "END: " ++ show k
-    (Just s1) -> print s1 >> predictND (k - 1) n f s1
-  
+    (Just s1) -> print s1 >> predictND (k - 1) m s1
+
 punctuations :: String
 punctuations = " ,."
 
 -- wordsP :: split elements -> accumlator -> prospective result -> input string -> final result
 -- This is a function that converts a string to a list of words.
 wordsP :: String -> String -> [String] -> String -> [String]
-wordsP _ a l [] = filter (not . null) (a:l)
+wordsP _ a l [] = filter (not . null) (a : l)
 wordsP p a l (x:xs)
-  | x `elem` p = wordsP p [] (a:l) xs
-  | otherwise = wordsP p (a++[x]) l xs 
-
-
-
-
+  | x `elem` p = wordsP p [] (a : l) xs
+  | otherwise = wordsP p (a ++ [x]) l xs

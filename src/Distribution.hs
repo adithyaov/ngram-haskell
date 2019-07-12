@@ -1,8 +1,8 @@
 module Distribution where
 
+import Control.Monad.Trans.Maybe
 import Data.Map.Strict (Map, toList)
 import System.Random (randomRIO)
-import Control.Monad.Trans.Maybe
 
 type Distribution a = [(a, Int)]
 
