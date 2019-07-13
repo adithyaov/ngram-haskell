@@ -39,3 +39,16 @@ executable ngram
                      , ngram
   hs-source-dirs:      exe
   default-language:    Haskell2010
+
+
+test-suite test-ngram
+    hs-source-dirs:     test
+    type:               exitcode-stdio-1.0
+    main-is:            Test.hs
+    other-modules:      Test.Distribution
+                     ,  Test.Ngram
+                     ,  Test.Internal
+    build-depends:      ngram
+                     ,  base
+                     ,  containers
+    default-language:   Haskell2010
