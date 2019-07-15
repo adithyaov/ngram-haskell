@@ -76,7 +76,7 @@ predictND k m s0 = do
 
 -- Punctuation list to split the words
 punctuations :: String
-punctuations = " ,."
+punctuations = [' ', ',', '.', '\n']
 
 -- wordsP :: split elements -> accumlator -> prospective result -> input string -> final result
 -- This is a function that converts a string to a list of words breaking the punctuations
