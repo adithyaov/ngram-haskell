@@ -10,7 +10,7 @@ main = do
 
 -- Simple helper function to run the parsed command
 runParse :: [String] -> IO ()
-runParse = case parseCommand args of
+runParse args = case parseCommand args of
     Nothing -> putStrLn "Improper arguments"
     (Just c) -> runCommand c
 

@@ -8,7 +8,7 @@ import Ngram
 import System.IO
 
 -- A default save path
-defaultOutPath = "./test/default.bin"
+defaultOutPath i = i ++ ".bin"
 
 -- The command data type
 data Command
@@ -34,9 +34,9 @@ readModel p = S.decode <$> BS.readFile p
 -- Read a command and run the desired effect
 runCommand :: Command -> IO ()
 runCommand (MakeCorpus (Right i) inp mOut) =
-  saveModel (fromMaybe defaultOutPath mOut) =<< makeC i <$> readCorpus inp
+  saveModel (fromMaybe (defaultOutPath inp) mOut) =<< makeC i <$> readCorpus inp
 runCommand (MakeCorpus (Left i) inp mOut) =
-  saveModel (fromMaybe defaultOutPath mOut) =<< makeW i <$> readCorpus inp
+  saveModel (fromMaybe (defaultOutPath inp) mOut) =<< makeW i <$> readCorpus inp
 runCommand (Predict inp s k) = do
   eM <- readModel inp
   case eM of

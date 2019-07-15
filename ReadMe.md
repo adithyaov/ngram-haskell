@@ -72,4 +72,34 @@ following reasons.
    pass functions with efficient folds.
 
 
+## Usage
+
+The command line application takes a maximum of 5 arguments and
+a minimum of 4 arguments.
+
+**Argument 1: "make" | "predict"** : This tells the application eithr to make a model or predict from a model.
+
+**If Argument 1 is "make", Argument 2: "char" | "word"** : This tells the application to make a word level or a character level ngram model.
+
+**If Argument 1 is "make", Argument 3: Integer** : This is the "n" in the ngram.
+
+**If Argument 1 is "make":, Argument 4: String** : This expects an input path of a file to learn from.
+
+**If Argument 1 is "make":, Argument 5: String?** : This is an optional argument, expects an output path for the model to be saved. If this is not provided then the default output path is "input path".bin.
+
+**If Argument 1 is "predict", Argument 2: String** : This should be a path to a valid model (made by "make").
+
+**If Argument 1 is "predict", Argument 3: String** : This is should be the input text for the prediction to take place on.
+
+**If Argument 1 is "predict", Argument 4: Integer** : This is number of elements to predict given the input text.
+
+### Examples
+
+`make char 3 /usr/input.txt` 
+
+`make word 2 /usr/input.txt /usr/output.bin`
+
+`predict /usr/output.bin "to be or n" 3`
+
+
 
